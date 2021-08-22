@@ -1,6 +1,8 @@
 '''
-Guide source is: https://realpython.com/beautiful-soup-web-scraper-python/
+This program is written to crawl match pages on vlr.gg and scrape data for team comp data analysis.
+Looking for ways to clean up the code and make it more efficient, but for now, it works.
 '''
+
 #import relevant libraries
 import requests
 from bs4 import BeautifulSoup
@@ -8,19 +10,19 @@ import pandas as pd
 import pyodbc
 import MySQLdb
 
+#function to pull the alt text from a list of html img tags to get agent names
 def extract_alt(agent_list):
     new_list = []
     for agent in agent_list:
         new_list.append(agent['alt'])
     return new_list
 
+#defining the program as a function to have the program loop indefinitely until told to quit
 def main():
     #specify URL, page, and parse it with BS
     URL = input('Enter the URL: ')
     page = requests.get(URL)
     soup = BeautifulSoup(page.content, 'html.parser')
-
-
 
     #isolate match header for event/round names
     match_header = soup.find('a', class_='match-header-event')
@@ -55,7 +57,6 @@ def main():
     right_team_map_four_agents_source = []
     left_team_map_five_agents_source = []
     right_team_map_five_agents_source = []
-
     left_team_map_one_agents = extract_alt(left_team_map_one_agents_source)
     right_team_map_one_agents = extract_alt(right_team_map_one_agents_source)
     left_team_map_two_agents = extract_alt(left_team_map_two_agents_source)
@@ -64,7 +65,7 @@ def main():
     #isolates the header for each map.
     map_header = soup.find_all("div", class_='vm-stats-game-header')
 
-    #finds the map information and step-by-step isolates the map/s name
+    #finds the map information and step-by-step isolates the map name
     maps = soup.find_all('div', class_='map')
     map_one_and_duration = map_header[0].find('div', class_='map')
     map_two_and_duration = map_header[1].find('div', class_='map')
@@ -86,7 +87,7 @@ def main():
     right_team_map_two_attack_wins = attack_round_wins[3].get_text()
     right_team_map_two_defense_wins = defense_round_wins[3].get_text()
 
-
+    #defines all variables for extra maps in cases where best of 3 or best of 5 matches go beyond the minimum.
     if len(maps) > 2:
         left_team_map_three_agents_source = agents[4].find_all('img', alt=True)
         right_team_map_three_agents_source = agents[5].find_all('img', alt=True)
@@ -144,7 +145,7 @@ def main():
         else:
             right_team_won_map_five = True               
 
-
+    #setting a teams win or loss based on the combination of rounds won and round lost
     left_team_won_map_one = False
     right_team_won_map_one = False
     left_team_won_map_two = False
@@ -158,11 +159,11 @@ def main():
     else:
         right_team_won_map_two = True
 
-
-    sql_statement = "INSERT INTO vctdata " \
-    "('event name', 'event round', 'team name', 'map', 'win', 'attack wins', 'defense losses', 'defense wins', 'attack losses', 'agent 1', 'agent 2', 'agent 3', 'agent 4', 'agent 5') " \
+    #since the same SQL insert statement will be used a minimum of 4 times (and upwards of 10 times in best of 5 matches), defined a string with placeholders for each variable of data.
+    sql_statement = "INSERT INTO vctdata (`event name`, `event round`, `team name`, map, win, `attack wins`, `defense losses`, `defense wins`, `attack losses`, `agent 1`, `agent 2`, `agent 3`, `agent 4`, `agent 5`) " \
     "VALUES ('{}', '{}', '{}', '{}', {}, {}, {}, {}, {}, '{}', '{}', '{}', '{}', '{}');"   
 
+    #connecting to local VCTData SQL database
     db = MySQLdb.connect(
             host="localhost",
             user="scraping_user",
@@ -173,51 +174,111 @@ def main():
 
     cursor = db.cursor()
 
-    update_table_left_team_map_one = cursor.execute(sql_statement.format(event_name, event_round, left_team_name, map_one, left_team_won_map_one, left_team_map_one_attack_wins, 
+    #formatting the SQL statement with each individual set of data for a new row and committing them below, followed by if statements to do the same on any extra maps.
+    update_table_left_team_map_one = sql_statement.format(event_name, event_round, left_team_name, map_one, left_team_won_map_one, left_team_map_one_attack_wins, 
                               right_team_map_one_attack_wins, left_team_map_one_defense_wins, right_team_map_one_defense_wins, 
-                              left_team_map_one_agents[0], left_team_map_one_agents[1], left_team_map_one_agents[2], left_team_map_one_agents[3], left_team_map_one_agents[4]));
+                              left_team_map_one_agents[0], left_team_map_one_agents[1], left_team_map_one_agents[2], left_team_map_one_agents[3], left_team_map_one_agents[4])
 
-    update_table_right_team_map_one = cursor.execute(sql_statement.format(event_name, event_round, right_team_name, map_one, right_team_won_map_one, right_team_map_one_attack_wins, 
+    update_table_right_team_map_one = sql_statement.format(event_name, event_round, right_team_name, map_one, right_team_won_map_one, right_team_map_one_attack_wins, 
                               left_team_map_one_attack_wins, right_team_map_one_defense_wins, left_team_map_one_defense_wins, 
-                              right_team_map_one_agents[0], right_team_map_one_agents[1], right_team_map_one_agents[2], right_team_map_one_agents[3], right_team_map_one_agents[4]));
+                              right_team_map_one_agents[0], right_team_map_one_agents[1], right_team_map_one_agents[2], right_team_map_one_agents[3], right_team_map_one_agents[4])
 
-    update_table_left_team_map_two = cursor.execute(sql_statement.format(event_name, event_round, left_team_name, map_two, left_team_won_map_two, left_team_map_two_attack_wins, 
+    update_table_left_team_map_two = sql_statement.format(event_name, event_round, left_team_name, map_two, left_team_won_map_two, left_team_map_two_attack_wins, 
                               right_team_map_two_attack_wins, left_team_map_two_defense_wins, right_team_map_two_defense_wins, 
-                              left_team_map_two_agents[0], left_team_map_two_agents[1], left_team_map_two_agents[2], left_team_map_two_agents[3], left_team_map_two_agents[4]));
+                              left_team_map_two_agents[0], left_team_map_two_agents[1], left_team_map_two_agents[2], left_team_map_two_agents[3], left_team_map_two_agents[4])
 
-    update_table_right_team_map_two = cursor.execute(sql_statement.format(event_name, event_round, right_team_name, map_two, right_team_won_map_two, right_team_map_two_attack_wins, 
+    update_table_right_team_map_two = sql_statement.format(event_name, event_round, right_team_name, map_two, right_team_won_map_two, right_team_map_two_attack_wins, 
                               left_team_map_two_attack_wins, right_team_map_two_defense_wins, left_team_map_two_defense_wins, 
-                              right_team_map_two_agents[0], right_team_map_two_agents[1], right_team_map_two_agents[2], right_team_map_two_agents[3], right_team_map_two_agents[4]));
+                              right_team_map_two_agents[0], right_team_map_two_agents[1], right_team_map_two_agents[2], right_team_map_two_agents[3], right_team_map_two_agents[4])
+
+    try:
+        cursor.execute(update_table_left_team_map_one)
+        db.commit()
+    except:
+        db.rollback()
+
+    try:
+        cursor.execute(update_table_right_team_map_one)
+        db.commit()
+    except:
+        db.rollback()
+
+    try:
+        cursor.execute(update_table_left_team_map_two)
+        db.commit()
+    except:
+        db.rollback()
+
+    try:
+        cursor.execute(update_table_right_team_map_two)
+        db.commit()
+    except:
+        db.rollback()
 
     if len(maps) > 2:
-        update_table_left_team_map_three = cursor.execute(sql_statement.format(event_name, event_round, left_team_name, map_three, left_team_won_map_three, left_team_map_three_attack_wins, 
+        update_table_left_team_map_three = sql_statement.format(event_name, event_round, left_team_name, map_three, left_team_won_map_three, left_team_map_three_attack_wins, 
                               right_team_map_three_attack_wins, left_team_map_three_defense_wins, right_team_map_three_defense_wins, 
-                              left_team_map_three_agents[0], left_team_map_three_agents[1], left_team_map_three_agents[2], left_team_map_three_agents[3], left_team_map_three_agents[4]));
+                              left_team_map_three_agents[0], left_team_map_three_agents[1], left_team_map_three_agents[2], left_team_map_three_agents[3], left_team_map_three_agents[4])
         
-        update_table_right_team_map_three = cursor.execute(sql_statement.format(event_name, event_round, right_team_name, map_three, right_team_won_map_three, right_team_map_three_attack_wins, 
+        update_table_right_team_map_three = sql_statement.format(event_name, event_round, right_team_name, map_three, right_team_won_map_three, right_team_map_three_attack_wins, 
                               left_team_map_three_attack_wins, right_team_map_three_defense_wins, left_team_map_three_defense_wins, 
-                              right_team_map_three_agents[0], right_team_map_three_agents[1], right_team_map_three_agents[2], right_team_map_three_agents[3], right_team_map_three_agents[4]));      
+                              right_team_map_three_agents[0], right_team_map_three_agents[1], right_team_map_three_agents[2], right_team_map_three_agents[3], right_team_map_three_agents[4])   
+        try:
+            cursor.execute(update_table_left_team_map_three)
+            db.commit()
+        except:
+            db.rollback()
+
+        try:
+            cursor.execute(update_table_right_team_map_three)
+            db.commit()
+        except:
+            db.rollback()
 
     if len(maps) > 3:
-        update_table_left_team_map_four = cursor.execute(sql_statement.format(event_name, event_round, left_team_name, map_four, left_team_won_map_four, left_team_map_four_attack_wins, 
+        update_table_left_team_map_four = sql_statement.format(event_name, event_round, left_team_name, map_four, left_team_won_map_four, left_team_map_four_attack_wins, 
                               right_team_map_four_attack_wins, left_team_map_four_defense_wins, right_team_map_four_defense_wins, 
-                              left_team_map_four_agents[0], left_team_map_four_agents[1], left_team_map_four_agents[2], left_team_map_four_agents[3], left_team_map_four_agents[4]));
+                              left_team_map_four_agents[0], left_team_map_four_agents[1], left_team_map_four_agents[2], left_team_map_four_agents[3], left_team_map_four_agents[4])
 
-        update_table_right_team_map_four = cursor.execute(sql_statement.format(event_name, event_round, right_team_name, map_four, right_team_won_map_four, right_team_map_four_attack_wins, 
+        update_table_right_team_map_four = sql_statement.format(event_name, event_round, right_team_name, map_four, right_team_won_map_four, right_team_map_four_attack_wins, 
                               left_team_map_four_attack_wins, right_team_map_four_defense_wins, left_team_map_four_defense_wins, 
-                              right_team_map_four_agents[0], right_team_map_four_agents[1], right_team_map_four_agents[2], right_team_map_four_agents[3], right_team_map_four_agents[4]));
+                              right_team_map_four_agents[0], right_team_map_four_agents[1], right_team_map_four_agents[2], right_team_map_four_agents[3], right_team_map_four_agents[4])
+              
+        try:
+            cursor.execute(update_table_left_team_map_four)
+            db.commit()
+        except:
+            db.rollback()
+
+        try:
+            cursor.execute(update_table_right_team_map_four)
+            db.commit()
+        except:
+            db.rollback()
 
     if len(maps) > 4:
-        update_table_left_team_map_five = cursor.execute(sql_statement.format(event_name, event_round, left_team_name, map_five, left_team_won_map_five, left_team_map_five_attack_wins, 
+        update_table_left_team_map_five = sql_statement.format(event_name, event_round, left_team_name, map_five, left_team_won_map_five, left_team_map_five_attack_wins, 
                               right_team_map_five_attack_wins, left_team_map_five_defense_wins, right_team_map_five_defense_wins, 
-                              left_team_map_five_agents[0], left_team_map_five_agents[1], left_team_map_five_agents[2], left_team_map_five_agents[3], left_team_map_five_agents[4]));
+                              left_team_map_five_agents[0], left_team_map_five_agents[1], left_team_map_five_agents[2], left_team_map_five_agents[3], left_team_map_five_agents[4])
 
-        update_table_right_team_map_five = cursor.execute(sql_statement.format(event_name, event_round, right_team_name, map_five, right_team_won_map_five, right_team_map_five_attack_wins, 
+        update_table_right_team_map_five = sql_statement.format(event_name, event_round, right_team_name, map_five, right_team_won_map_five, right_team_map_five_attack_wins, 
                               left_team_map_five_attack_wins, right_team_map_five_defense_wins, left_team_map_five_defense_wins, 
-                              right_team_map_five_agents[0], right_team_map_five_agents[1], right_team_map_five_agents[2], right_team_map_five_agents[3], right_team_map_five_agents[4]));      
+                              right_team_map_five_agents[0], right_team_map_five_agents[1], right_team_map_five_agents[2], right_team_map_five_agents[3], right_team_map_five_agents[4])     
+        try:
+            cursor.execute(update_table_left_team_map_five)
+            db.commit()
+        except:
+            db.rollback()
+
+        try:
+            cursor.execute(update_table_right_team_map_five)
+            db.commit()
+        except:
+            db.rollback()
 
     db.close()
 
+#looping the program to skip having to manually run it over and over again.
 while True:
     main()
     if input("Repeat?").strip().upper() != 'Y':
