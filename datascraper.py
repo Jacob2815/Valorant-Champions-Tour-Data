@@ -1,6 +1,3 @@
-'''
-Guide source is: https://realpython.com/beautiful-soup-web-scraper-python/
-'''
 #import relevant libraries
 import requests
 from bs4 import BeautifulSoup
@@ -47,6 +44,10 @@ left_team_map_two_agents_source = agents[2].find_all('img', alt=True)
 right_team_map_two_agents_source = agents[3].find_all('img', alt=True)
 left_team_map_three_agents_source = []
 right_team_map_three_agents_source = []
+left_team_map_four_agents_source = []
+right_team_map_four_agents_source = []
+left_team_map_five_agents_source = []
+right_team_map_five_agents_source = []
 
 left_team_map_one_agents = extract_alt(left_team_map_one_agents_source)
 right_team_map_one_agents = extract_alt(right_team_map_one_agents_source)
@@ -60,6 +61,8 @@ maps = soup.find_all('div', class_='map')
 map_one_and_duration = map_header[0].find('div', class_='map')
 map_two_and_duration = map_header[1].find('div', class_='map')
 map_three_and_duration = []
+map_four_and_duration = []
+map_five_and_duration = []
 map_one = map_one_and_duration.find('span')
 map_two = map_two_and_duration.find('span')
 map_one = map_one.get_text(strip=True)
@@ -78,7 +81,7 @@ left_team_map_two_defense_wins = defense_round_wins[2].get_text()
 right_team_map_two_attack_wins = attack_round_wins[3].get_text()
 right_team_map_two_defense_wins = defense_round_wins[3].get_text()
 
-if len(maps) == 3:
+if len(maps) > 2:
     left_team_map_three_agents_source = agents[4].find_all('img', alt=True)
     right_team_map_three_agents_source = agents[5].find_all('img', alt=True)
     left_team_map_three_agents = extract_alt(left_team_map_three_agents_source)
@@ -96,6 +99,44 @@ if len(maps) == 3:
         left_team_won_map_three = True
     else:
         right_team_won_map_three = True
+        
+if len(maps) > 3:
+    left_team_map_four_agents_source = agents[6].find_all('img', alt=True)
+    right_team_map_four_agents_source = agents[7].find_all('img', alt=True)
+    left_team_map_four_agents = extract_alt(left_team_map_four_agents_source)
+    right_team_map_four_agents = extract_alt(right_team_map_four_agents_source)
+    map_four_and_duration = map_header[3].find('div', class_='map')
+    map_four = map_four_and_duration.find('span')
+    map_four = map_four.get_text(strip=True)
+    left_team_map_four_attack_wins = attack_round_wins[6].get_text(strip=True)
+    left_team_map_four_defense_wins = defense_round_wins[6].get_text(strip=True)
+    right_team_map_four_attack_wins = attack_round_wins[7].get_text(strip=True)
+    right_team_map_four_defense_wins = defense_round_wins[7].get_text(strip=True)
+    left_team_won_map_four = False
+    right_team_won_map_four = False
+    if left_team_map_four_attack_wins + left_team_map_four_defense_wins > right_team_map_four_attack_wins + right_team_map_four_defense_wins:
+        left_team_won_map_four = True
+    else:
+        right_team_won_map_four = True        
+        
+if len(maps) > 4:
+    left_team_map_five_agents_source = agents[8].find_all('img', alt=True)
+    right_team_map_five_agents_source = agents[9].find_all('img', alt=True)
+    left_team_map_five_agents = extract_alt(left_team_map_five_agents_source)
+    right_team_map_five_agents = extract_alt(right_team_map_five_agents_source)
+    map_five_and_duration = map_header[4].find('div', class_='map')
+    map_five = map_five_and_duration.find('span')
+    map_five = map_five.get_text(strip=True)
+    left_team_map_five_attack_wins = attack_round_wins[8].get_text(strip=True)
+    left_team_map_five_defense_wins = defense_round_wins[8].get_text(strip=True)
+    right_team_map_five_attack_wins = attack_round_wins[9].get_text(strip=True)
+    right_team_map_five_defense_wins = defense_round_wins[9].get_text(strip=True)
+    left_team_won_map_five = False
+    right_team_won_map_five = False
+    if left_team_map_five_attack_wins + left_team_map_five_defense_wins > right_team_map_five_attack_wins + right_team_map_five_defense_wins:
+        left_team_won_map_five = True
+    else:
+        right_team_won_map_five = True               
 
 
 left_team_won_map_one = False
@@ -113,14 +154,25 @@ if left_team_map_two_attack_wins + left_team_map_two_defense_wins > right_team_m
 else:
     right_team_won_map_two = True
 
-print(str(event_name))
-print(str(event_round))
-print(str(left_team_name) + ' vs ' + str(right_team_name))
-print("Map one: " + str(map_one))
-print("Map two: " + str(map_two))
-if len(maps) == 3:
-    print("Map three: " + str(map_three))
+sql_statement = "INSERT INTO vctdata " \
+"(event name, event round, team name, map, win, attack wins, defense losses, defense wins, attack losses, agent 1, agent 2, agent 3, agent 4, agent 5)" \
+"VALUES ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {});"   
 
+print(sql_statement.format(event_name, event_round, left_team_name, map_one, left_team_won_map_one, left_team_map_one_attack_wins, 
+                          right_team_map_one_attack_wins, left_team_map_one_defense_wins, right_team_map_one_defense_wins, 
+                          left_team_map_one_agents[0], left_team_map_one_agents[1], left_team_map_one_agents[2], left_team_map_one_agents[3], left_team_map_one_agents[4]))
+
+print(sql_statement.format(event_name, event_round, right_team_name, map_one, right_team_won_map_one, right_team_map_one_attack_wins, 
+                          left_team_map_one_attack_wins, right_team_map_one_defense_wins, left_team_map_one_defense_wins, 
+                          right_team_map_one_agents[0], right_team_map_one_agents[1], right_team_map_one_agents[2], right_team_map_one_agents[3], right_team_map_one_agents[4]))
+
+print(sql_statement.format(event_name, event_round, left_team_name, map_two, left_team_won_map_two, left_team_map_two_attack_wins, 
+                          right_team_map_two_attack_wins, left_team_map_two_defense_wins, right_team_map_two_defense_wins, 
+                          left_team_map_two_agents[0], left_team_map_two_agents[1], left_team_map_two_agents[2], left_team_map_two_agents[3], left_team_map_two_agents[4]))
+
+print(sql_statement.format(event_name, event_round, right_team_name, map_two, right_team_won_map_two, right_team_map_two_attack_wins, 
+                          left_team_map_two_attack_wins, right_team_map_two_defense_wins, left_team_map_two_defense_wins, 
+                          right_team_map_two_agents[0], right_team_map_two_agents[1], right_team_map_two_agents[2], right_team_map_two_agents[3], right_team_map_two_agents[4]))
 
 #db = MySQLdb.connect(
 #        host="localhost",
@@ -133,11 +185,21 @@ if len(maps) == 3:
 
 #cursor = db.cursor()
 
-#update_table_map_one = cursor.execute("");
-#update_table_map_two = cursor.execute("");
+#update_table_left_team_map_one = cursor.execute("");
+#update_table_right_team_map_one = cursor.execute("");
+#update_table_left_team_map_two = cursor.execute("");
+#update_table_right_team_map_two = cursor.execute("");
 
-#if len(maps) == 3:
-    #update_table_map_three = cursor.execute("");
+#if len(maps) > 2:
+    #update_table_left_team_map_three = cursor.execute("");
+    #update_table_right_team_map_three = cursor.execute("");      
+      
+#if len(maps) > 3:
+    #update_table_left_team_map_four = cursor.execute("");
+    #update_table_right_team_map_four = cursor.execute("");
 
+#if len(maps) > 4:
+    #update_table_left_team_map_five = cursor.execute("");
+    #update_table_right_team_map_five = cursor.execute("");      
 
 #db.close()
