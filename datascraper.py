@@ -276,21 +276,26 @@ def main(url):
 
     db.close()
 
-#looping the program to skip having to manually run it over and over again.
-
+#defining a function to pull the href link from the tags
 def extract_href(match_list):
     new_list = []
     for match in match_list:
         new_list.append(match['href'])
     return new_list
 
+#defining soup content for the portion of the site that houses lists of matches
 match_url = input('Enter URL: ')
 big_page = requests.get(match_url)
 big_soup = BeautifulSoup(big_page.content, 'html.parser')
 
+#creating a list of matches by pulling a tags
 list_of_match_tags = big_soup.find_all('a', class_='match-item')
+
+#extracting just the href data from the list
 list_of_matches = extract_href(list_of_match_tags)
 
+#iterate through the list of match links and run them through the main function, with an error exception to continue running in the event of an error
+#some matches dont have 2 maps played, but those are rare, low-stakes matches and aren't as valuable here
 for i in range(len(list_of_matches)):
     try:
         main('https://www.vlr.gg' + str(list_of_matches[i]))
