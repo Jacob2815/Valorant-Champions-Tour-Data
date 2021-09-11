@@ -1,6 +1,5 @@
 '''
 This program is written to crawl match pages on vlr.gg and scrape data for team comp data analysis.
-Looking for ways to clean up the code and make it more efficient, but for now, it works.
 '''
 
 #import relevant libraries
@@ -18,10 +17,9 @@ def extract_alt(agent_list):
     return new_list
 
 #defining the program as a function to have the program loop indefinitely until told to quit
-def main():
+def main(url):
     #specify URL, page, and parse it with BS
-    URL = input('Enter the URL: ')
-    page = requests.get(URL)
+    page = requests.get(url)
     soup = BeautifulSoup(page.content, 'html.parser')
 
     #isolate match header for event/round names
@@ -279,7 +277,19 @@ def main():
     db.close()
 
 #looping the program to skip having to manually run it over and over again.
-while True:
-    main()
-    if input("Repeat?").strip().upper() != 'Y':
-        break
+
+def extract_href(match_list):
+    new_list = []
+    for match in match_list:
+        new_list.append(match['href'])
+    return new_list
+
+match_url = input('Enter URL: ')
+big_page = requests.get(match_url)
+big_soup = BeautifulSoup(big_page.content, 'html.parser')
+
+list_of_match_tags = big_soup.find_all('a', class_='match-item')
+list_of_matches = extract_href(list_of_match_tags)
+
+for i in range(len(list_of_matches)):
+    main('https://www.vlr.gg' + str(list_of_matches[i]))
