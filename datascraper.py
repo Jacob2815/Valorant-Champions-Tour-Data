@@ -292,4 +292,7 @@ list_of_match_tags = big_soup.find_all('a', class_='match-item')
 list_of_matches = extract_href(list_of_match_tags)
 
 for i in range(len(list_of_matches)):
-    main('https://www.vlr.gg' + str(list_of_matches[i]))
+    try:
+        main('https://www.vlr.gg' + str(list_of_matches[i]))
+    except:
+        pass
