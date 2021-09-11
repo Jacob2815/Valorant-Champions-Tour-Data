@@ -17,7 +17,7 @@ def extract_alt(agent_list):
     return new_list
 
 #defining the program as a function to have the program loop indefinitely until told to quit
-def main(url):
+def scrape(url):
     #specify URL, page, and parse it with BS
     page = requests.get(url)
     soup = BeautifulSoup(page.content, 'html.parser')
@@ -283,21 +283,34 @@ def extract_href(match_list):
         new_list.append(match['href'])
     return new_list
 
-#defining soup content for the portion of the site that houses lists of matches
-match_url = input('Enter URL: ')
-big_page = requests.get(match_url)
-big_soup = BeautifulSoup(big_page.content, 'html.parser')
+def linkbuilder(match_url):
+    #defining soup content for the portion of the site that houses lists of matches
+    big_page = requests.get(match_url)
+    big_soup = BeautifulSoup(big_page.content, 'html.parser')
 
-#creating a list of matches by pulling a tags
-list_of_match_tags = big_soup.find_all('a', class_='match-item')
+    #creating a list of matches by pulling a tags
+    list_of_match_tags = big_soup.find_all('a', class_='match-item')
 
-#extracting just the href data from the list
-list_of_matches = extract_href(list_of_match_tags)
+    #extracting just the href data from the list
+    list_of_matches = extract_href(list_of_match_tags)
 
-#iterate through the list of match links and run them through the main function, with an error exception to continue running in the event of an error
-#some matches dont have 2 maps played, but those are rare, low-stakes matches and aren't as valuable here
-for i in range(len(list_of_matches)):
-    try:
-        main('https://www.vlr.gg' + str(list_of_matches[i]))
-    except:
-        pass
+    #iterate through the list of match links and run them through the main function, with an error exception to continue running in the event of an error
+    #some matches dont have 2 maps played, but those are rare, low-stakes matches and aren't as valuable here
+    for i in range(len(list_of_matches)):
+        try:
+            scrape('https://www.vlr.gg' + str(list_of_matches[i]))
+        except:
+            pass
+
+#initializing a new list 
+list_of_links = []
+
+#loop to allow me to enter multiple vlr.gg links, to then go in and loop through the matches in each of those links
+#allowing me to paste multiple at once and let the program run for a few minutes without having to watch it closely
+while True:
+    link = input('Enter link: ')
+    list_of_links.append(link)
+    if input('Repeat?').strip().upper() != 'Y':
+        for i in range(len(list_of_links)):
+            linkbuilder(list_of_links[i])
+        break
