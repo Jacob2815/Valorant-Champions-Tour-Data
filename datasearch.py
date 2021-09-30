@@ -53,12 +53,12 @@ def map_win_rates(agent):
             
 def team_comp_ranks(map, region, caliber):
 	count_statement = "SELECT COUNT(id) FROM vctdata.vctdata WHERE (`agent  1` = '{}' OR `agent  2` = '{}' OR `agent  3` = '{}' OR `agent  4` = '{}' OR `agent  5` = '{}') AND (`agent  1` = '{}' OR `agent  2` = '{}' OR `agent  3` = '{}' OR `agent  4` = '{}' OR `agent  5` = '{}') AND (`agent  1` = '{}' OR `agent  2` = '{}' OR `agent  3` = '{}' OR `agent  4` = '{}' OR `agent  5` = '{}') AND(`agent  1` = '{}' OR `agent  2` = '{}' OR `agent  3` = '{}' OR `agent  4` = '{}' OR `agent  5` = '{}') AND (`agent  1` = '{}' OR `agent  2` = '{}' OR `agent  3` = '{}' OR `agent  4` = '{}' OR `agent  5` = '{}');"
-    results = []
-    for a in range(len(agents)):
-    	for b in range(len(agents)):
+	results = []
+	for a in range(len(agents)):
+		for b in range(len(agents)):
 			for c in range(len(agents)):
 				for d in range(len(agents)):
-	    			for e in range(len(agents)):
-		    			cursor.execute(count_statement.format(agents[a], agents[a], agents[a], agents[a], agents[a], agents[b], agents[b], agents[b], agents[b], agents[b], agents[c], agents[c], agents[c], agents[c], agents[c], agents[d], agents[d], agents[d], agents[d], agents[d], agents[e], agents[e], agents[e], agents[e], agents[e]))            
-                        output = cursor.fetchall()
-                        results.append(output)
+	    				for e in range(len(agents)):
+		    				cursor.execute(count_statement.format(agents[a], agents[a], agents[a], agents[a], agents[a], agents[b], agents[b], agents[b], agents[b], agents[b], agents[c], agents[c], agents[c], agents[c], agents[c], agents[d], agents[d], agents[d], agents[d], agents[d], agents[e], agents[e], agents[e], agents[e], agents[e]))            
+                        			output = cursor.fetchall()
+                        			results.append(output)
