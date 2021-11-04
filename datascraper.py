@@ -85,6 +85,8 @@ def scrape(url):
     right_team_map_two_attack_wins = attack_round_wins[3].get_text()
     right_team_map_two_defense_wins = defense_round_wins[3].get_text()
 
+    scores = soup.find_all('div', class_='score')
+
     #defines all variables for extra maps in cases where best of 3 or best of 5 matches go beyond the minimum.
     if len(maps) > 2:
         left_team_map_three_agents_source = agents[4].find_all('img', alt=True)
@@ -100,7 +102,7 @@ def scrape(url):
         right_team_map_three_defense_wins = defense_round_wins[5].get_text(strip=True)
         left_team_won_map_three = False
         right_team_won_map_three = False
-        if left_team_map_three_attack_wins + left_team_map_three_defense_wins > right_team_map_three_attack_wins + right_team_map_three_defense_wins:
+        if int(scores[4].get_text(strip=True)) > int(scores[5].get_text(strip=True)):
             left_team_won_map_three = True
         else:
             right_team_won_map_three = True
@@ -119,7 +121,7 @@ def scrape(url):
         right_team_map_four_defense_wins = defense_round_wins[7].get_text(strip=True)
         left_team_won_map_four = False
         right_team_won_map_four = False
-        if left_team_map_four_attack_wins + left_team_map_four_defense_wins > right_team_map_four_attack_wins + right_team_map_four_defense_wins:
+        if int(scores[6].get_text(strip=True)) > int(scores[7].get_text(strip=True)):
             left_team_won_map_four = True
         else:
             right_team_won_map_four = True        
@@ -138,7 +140,7 @@ def scrape(url):
         right_team_map_five_defense_wins = defense_round_wins[9].get_text(strip=True)
         left_team_won_map_five = False
         right_team_won_map_five = False
-        if left_team_map_five_attack_wins + left_team_map_five_defense_wins > right_team_map_five_attack_wins + right_team_map_five_defense_wins:
+        if int(scores[8].get_text(strip=True)) > int(scores[9].get_text(strip=True)):
             left_team_won_map_five = True
         else:
             right_team_won_map_five = True               
@@ -148,11 +150,11 @@ def scrape(url):
     right_team_won_map_one = False
     left_team_won_map_two = False
     right_team_won_map_two = False
-    if left_team_map_one_attack_wins + left_team_map_one_defense_wins > right_team_map_one_attack_wins + right_team_map_one_defense_wins:
+    if int(scores[0].get_text(strip=True)) > int(scores[1].get_text(strip=True)):
         left_team_won_map_one = True
     else:
         right_team_won_map_one = True
-    if left_team_map_two_attack_wins + left_team_map_two_defense_wins > right_team_map_two_attack_wins + right_team_map_two_defense_wins:
+    if int(scores[2].get_text(strip=True)) > int(scores[3].get_text(strip=True)):
         left_team_won_map_two = True
     else:
         right_team_won_map_two = True
@@ -314,3 +316,25 @@ while True:
         for i in range(len(list_of_links)):
             linkbuilder(list_of_links[i])
         break
+
+#noticed an issue where sometimes map is listed as "mapname"PICK, which throws errors when trying to isolate a specific map. For convenience,
+#I was manually updating the database upon data entry, seemed more efficient to automate that process here by executing my saved replacement statements.
+db = MySQLdb.connect(
+            host="localhost",
+            user="scraping_user",
+            passwd="scrapyboi",
+            db="vctdata"
+            )
+print(db)
+
+cursor = db.cursor()
+cursor.execute("UPDATE vctdata.vctdata SET map = REPLACE(map,'AscentPICK','Ascent') WHERE map LIKE 'Ascent%';")
+cursor.execute("UPDATE vctdata.vctdata SET map = REPLACE(map,'BindPICK','Bind') WHERE map LIKE 'Bind%';")
+cursor.execute("UPDATE vctdata.vctdata SET map = REPLACE(map,'BreezePICK','Breeze') WHERE map LIKE 'Breeze%';")
+cursor.execute("UPDATE vctdata.vctdata SET map = REPLACE(map,'HavenPICK','Haven') WHERE map LIKE 'Haven%';")
+cursor.execute("UPDATE vctdata.vctdata SET map = REPLACE(map,'IceboxPICK','Icebox') WHERE map LIKE 'Icebox%';")
+cursor.execute("UPDATE vctdata.vctdata SET map = REPLACE(map,'SplitPICK','Split') WHERE map LIKE 'Split%';")
+
+db.commit()
+
+db.close()
