@@ -140,7 +140,7 @@ def main():
             top_teams_response = input("Enter your choice: ")
             if int(top_teams_response) == 1:
                 team_comp_rankings_all_maps()
-            elif int(top_teams_response) == 1:
+            elif int(top_teams_response) == 2:
                 team_comp_rankings()
             else:
                 print("Try again.")
